@@ -1,0 +1,72 @@
+from itertools import product
+import random
+
+# Notas disponíveis
+notes = [62, 65, 69, 71, 74]
+
+# Durações disponíveis
+durations = [0.5, 0.75, 1.0]
+
+# Número de notas na combinação (variável entre 6 e 9)
+Number_of_notes_in_the_theme = 6  # @param {type:"slider", min:6, max:9, step:1}
+num_notes = Number_of_notes_in_the_theme
+
+#Garantir que nenhuma nota se repete sucessivamente mais do que duas vezes
+def is_valid(combination):
+    for i in range(1, len(combination) - 1):
+        if combination[i] == combination[i - 1] == combination[i + 1]:
+            return False
+    return True
+
+# Filtrar combinações válidas
+valid_duration_combinations = list(filter(is_valid, duration_combinations))
+# Gera combinação aleatória de notas
+chosen_note_combination = random.choices(notes, k=num_notes)
+
+# Gera combinação aleatória de durações
+chosen_duration_combination = random.choices(durations, k=num_notes)
+
+# Combinar as duas escolhas
+zelda_alike_song = [(chosen_duration_combination, chosen_note_combination)]
+
+# Imprimir o resultado
+print("Resultado combinado:")
+print(zelda_alike_song)
+
+from midiutil import MIDIFile
+total_duration = sum(chosen_duration_combination)
+# Create a MIDI file
+midi = MIDIFile(1)
+track = 0
+channel = 0
+time = 0
+duration = total_duration
+tempo = 500
+volume = 100
+
+# Set the tempo
+midi.addTempo(track, time, tempo)
+
+# Iterate over the allowed combinations and add notes to the MIDI file
+for combination in zelda_alike_song:
+    chosen_duration_combination, chosen_notes_combination = combination
+    assert len(chosen_duration_combination) == len(chosen_notes_combination), "Lengths of rhythm notes and melody notes must be the same"
+    for rhythm, pitch in zip(chosen_duration_combination, chosen_notes_combination):
+        midi.addNote(track, channel, pitch, time, duration * rhythm, volume)
+        time += duration * rhythm
+
+# Save the MIDI file
+with open("output.mid", "wb") as f:
+    midi.writeFile(f)
+
+# Convert MIDI to audio using FluidSynth
+from midi2audio import FluidSynth
+FluidSynth().midi_to_audio('output.mid', 'melody.wav')
+
+# Display the audio
+from IPython.display import Audio, display
+display(Audio(filename='melody.wav', rate=44100))
+# Print the allowed combinations
+for combination in zelda_alike_song:
+   chosen_duration_combination, chosen_notes_combination = combination
+   
